@@ -25,6 +25,7 @@ type AddTwoNumbrsClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	PrimeServerStream(ctx context.Context, in *PrimeRequest, opts ...grpc.CallOption) (AddTwoNumbrs_PrimeServerStreamClient, error)
 	AverageClientStream(ctx context.Context, opts ...grpc.CallOption) (AddTwoNumbrs_AverageClientStreamClient, error)
+	MaxApiBiStream(ctx context.Context, opts ...grpc.CallOption) (AddTwoNumbrs_MaxApiBiStreamClient, error)
 }
 
 type addTwoNumbrsClient struct {
@@ -110,6 +111,37 @@ func (x *addTwoNumbrsAverageClientStreamClient) CloseAndRecv() (*AverageResponse
 	return m, nil
 }
 
+func (c *addTwoNumbrsClient) MaxApiBiStream(ctx context.Context, opts ...grpc.CallOption) (AddTwoNumbrs_MaxApiBiStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &AddTwoNumbrs_ServiceDesc.Streams[2], "/greet.AddTwoNumbrs/MaxApiBiStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &addTwoNumbrsMaxApiBiStreamClient{stream}
+	return x, nil
+}
+
+type AddTwoNumbrs_MaxApiBiStreamClient interface {
+	Send(*MaxApiRequest) error
+	Recv() (*MaxApiResponse, error)
+	grpc.ClientStream
+}
+
+type addTwoNumbrsMaxApiBiStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *addTwoNumbrsMaxApiBiStreamClient) Send(m *MaxApiRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *addTwoNumbrsMaxApiBiStreamClient) Recv() (*MaxApiResponse, error) {
+	m := new(MaxApiResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // AddTwoNumbrsServer is the server API for AddTwoNumbrs service.
 // All implementations must embed UnimplementedAddTwoNumbrsServer
 // for forward compatibility
@@ -117,6 +149,7 @@ type AddTwoNumbrsServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	PrimeServerStream(*PrimeRequest, AddTwoNumbrs_PrimeServerStreamServer) error
 	AverageClientStream(AddTwoNumbrs_AverageClientStreamServer) error
+	MaxApiBiStream(AddTwoNumbrs_MaxApiBiStreamServer) error
 	mustEmbedUnimplementedAddTwoNumbrsServer()
 }
 
@@ -132,6 +165,9 @@ func (UnimplementedAddTwoNumbrsServer) PrimeServerStream(*PrimeRequest, AddTwoNu
 }
 func (UnimplementedAddTwoNumbrsServer) AverageClientStream(AddTwoNumbrs_AverageClientStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method AverageClientStream not implemented")
+}
+func (UnimplementedAddTwoNumbrsServer) MaxApiBiStream(AddTwoNumbrs_MaxApiBiStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method MaxApiBiStream not implemented")
 }
 func (UnimplementedAddTwoNumbrsServer) mustEmbedUnimplementedAddTwoNumbrsServer() {}
 
@@ -211,6 +247,32 @@ func (x *addTwoNumbrsAverageClientStreamServer) Recv() (*AverageRequest, error) 
 	return m, nil
 }
 
+func _AddTwoNumbrs_MaxApiBiStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(AddTwoNumbrsServer).MaxApiBiStream(&addTwoNumbrsMaxApiBiStreamServer{stream})
+}
+
+type AddTwoNumbrs_MaxApiBiStreamServer interface {
+	Send(*MaxApiResponse) error
+	Recv() (*MaxApiRequest, error)
+	grpc.ServerStream
+}
+
+type addTwoNumbrsMaxApiBiStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *addTwoNumbrsMaxApiBiStreamServer) Send(m *MaxApiResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *addTwoNumbrsMaxApiBiStreamServer) Recv() (*MaxApiRequest, error) {
+	m := new(MaxApiRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // AddTwoNumbrs_ServiceDesc is the grpc.ServiceDesc for AddTwoNumbrs service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +294,12 @@ var AddTwoNumbrs_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "AverageClientStream",
 			Handler:       _AddTwoNumbrs_AverageClientStream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "MaxApiBiStream",
+			Handler:       _AddTwoNumbrs_MaxApiBiStream_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},

@@ -22,7 +22,8 @@ func main() {
 
 	// AddNum(add_client)
 	// PrimeDecompClient(add_client)
-	AverageClient(add_client)
+	// AverageClient(add_client)
+	MaxApiDualStream(add_client)
 
 	defer conn.Close()
 
