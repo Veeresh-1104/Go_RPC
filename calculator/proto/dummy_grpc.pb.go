@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AddTwoNumbrsClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
+	PrimeServerStream(ctx context.Context, in *PrimeRequest, opts ...grpc.CallOption) (AddTwoNumbrs_PrimeServerStreamClient, error)
 }
 
 type addTwoNumbrsClient struct {
@@ -42,11 +43,44 @@ func (c *addTwoNumbrsClient) Add(ctx context.Context, in *AddRequest, opts ...gr
 	return out, nil
 }
 
+func (c *addTwoNumbrsClient) PrimeServerStream(ctx context.Context, in *PrimeRequest, opts ...grpc.CallOption) (AddTwoNumbrs_PrimeServerStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &AddTwoNumbrs_ServiceDesc.Streams[0], "/greet.AddTwoNumbrs/PrimeServerStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &addTwoNumbrsPrimeServerStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type AddTwoNumbrs_PrimeServerStreamClient interface {
+	Recv() (*PrimeResponse, error)
+	grpc.ClientStream
+}
+
+type addTwoNumbrsPrimeServerStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *addTwoNumbrsPrimeServerStreamClient) Recv() (*PrimeResponse, error) {
+	m := new(PrimeResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // AddTwoNumbrsServer is the server API for AddTwoNumbrs service.
 // All implementations must embed UnimplementedAddTwoNumbrsServer
 // for forward compatibility
 type AddTwoNumbrsServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
+	PrimeServerStream(*PrimeRequest, AddTwoNumbrs_PrimeServerStreamServer) error
 	mustEmbedUnimplementedAddTwoNumbrsServer()
 }
 
@@ -56,6 +90,9 @@ type UnimplementedAddTwoNumbrsServer struct {
 
 func (UnimplementedAddTwoNumbrsServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
+}
+func (UnimplementedAddTwoNumbrsServer) PrimeServerStream(*PrimeRequest, AddTwoNumbrs_PrimeServerStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method PrimeServerStream not implemented")
 }
 func (UnimplementedAddTwoNumbrsServer) mustEmbedUnimplementedAddTwoNumbrsServer() {}
 
@@ -88,6 +125,27 @@ func _AddTwoNumbrs_Add_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AddTwoNumbrs_PrimeServerStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(PrimeRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(AddTwoNumbrsServer).PrimeServerStream(m, &addTwoNumbrsPrimeServerStreamServer{stream})
+}
+
+type AddTwoNumbrs_PrimeServerStreamServer interface {
+	Send(*PrimeResponse) error
+	grpc.ServerStream
+}
+
+type addTwoNumbrsPrimeServerStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *addTwoNumbrsPrimeServerStreamServer) Send(m *PrimeResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // AddTwoNumbrs_ServiceDesc is the grpc.ServiceDesc for AddTwoNumbrs service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -100,6 +158,12 @@ var AddTwoNumbrs_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AddTwoNumbrs_Add_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "PrimeServerStream",
+			Handler:       _AddTwoNumbrs_PrimeServerStream_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "dummy.proto",
 }

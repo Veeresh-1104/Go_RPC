@@ -20,7 +20,8 @@ func main() {
 
 	add_client := pb.NewAddTwoNumbrsClient(conn)
 
-	AddNum(add_client)
+	// AddNum(add_client)
+	PrimeDecompClient(add_client)
 
 	defer conn.Close()
 
