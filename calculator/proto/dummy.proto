@@ -21,8 +21,17 @@ message PrimeResponse{
     int32 answer = 1;
 }
 
+message AverageRequest{
+    float num = 1;
+}
+
+message AverageResponse{
+    float avg = 1;
+}
+
 
 service AddTwoNumbrs{
     rpc Add(AddRequest) returns (AddResponse);
     rpc PrimeServerStream(PrimeRequest) returns (stream PrimeResponse);
+    rpc AverageClientStream(stream AverageRequest) returns (AverageResponse);
 }

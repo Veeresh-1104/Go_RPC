@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type AddTwoNumbrsClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	PrimeServerStream(ctx context.Context, in *PrimeRequest, opts ...grpc.CallOption) (AddTwoNumbrs_PrimeServerStreamClient, error)
+	AverageClientStream(ctx context.Context, opts ...grpc.CallOption) (AddTwoNumbrs_AverageClientStreamClient, error)
 }
 
 type addTwoNumbrsClient struct {
@@ -75,12 +76,47 @@ func (x *addTwoNumbrsPrimeServerStreamClient) Recv() (*PrimeResponse, error) {
 	return m, nil
 }
 
+func (c *addTwoNumbrsClient) AverageClientStream(ctx context.Context, opts ...grpc.CallOption) (AddTwoNumbrs_AverageClientStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &AddTwoNumbrs_ServiceDesc.Streams[1], "/greet.AddTwoNumbrs/AverageClientStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &addTwoNumbrsAverageClientStreamClient{stream}
+	return x, nil
+}
+
+type AddTwoNumbrs_AverageClientStreamClient interface {
+	Send(*AverageRequest) error
+	CloseAndRecv() (*AverageResponse, error)
+	grpc.ClientStream
+}
+
+type addTwoNumbrsAverageClientStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *addTwoNumbrsAverageClientStreamClient) Send(m *AverageRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *addTwoNumbrsAverageClientStreamClient) CloseAndRecv() (*AverageResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(AverageResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // AddTwoNumbrsServer is the server API for AddTwoNumbrs service.
 // All implementations must embed UnimplementedAddTwoNumbrsServer
 // for forward compatibility
 type AddTwoNumbrsServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	PrimeServerStream(*PrimeRequest, AddTwoNumbrs_PrimeServerStreamServer) error
+	AverageClientStream(AddTwoNumbrs_AverageClientStreamServer) error
 	mustEmbedUnimplementedAddTwoNumbrsServer()
 }
 
@@ -93,6 +129,9 @@ func (UnimplementedAddTwoNumbrsServer) Add(context.Context, *AddRequest) (*AddRe
 }
 func (UnimplementedAddTwoNumbrsServer) PrimeServerStream(*PrimeRequest, AddTwoNumbrs_PrimeServerStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method PrimeServerStream not implemented")
+}
+func (UnimplementedAddTwoNumbrsServer) AverageClientStream(AddTwoNumbrs_AverageClientStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method AverageClientStream not implemented")
 }
 func (UnimplementedAddTwoNumbrsServer) mustEmbedUnimplementedAddTwoNumbrsServer() {}
 
@@ -146,6 +185,32 @@ func (x *addTwoNumbrsPrimeServerStreamServer) Send(m *PrimeResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _AddTwoNumbrs_AverageClientStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(AddTwoNumbrsServer).AverageClientStream(&addTwoNumbrsAverageClientStreamServer{stream})
+}
+
+type AddTwoNumbrs_AverageClientStreamServer interface {
+	SendAndClose(*AverageResponse) error
+	Recv() (*AverageRequest, error)
+	grpc.ServerStream
+}
+
+type addTwoNumbrsAverageClientStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *addTwoNumbrsAverageClientStreamServer) SendAndClose(m *AverageResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *addTwoNumbrsAverageClientStreamServer) Recv() (*AverageRequest, error) {
+	m := new(AverageRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // AddTwoNumbrs_ServiceDesc is the grpc.ServiceDesc for AddTwoNumbrs service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -163,6 +228,11 @@ var AddTwoNumbrs_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "PrimeServerStream",
 			Handler:       _AddTwoNumbrs_PrimeServerStream_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "AverageClientStream",
+			Handler:       _AddTwoNumbrs_AverageClientStream_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "dummy.proto",
