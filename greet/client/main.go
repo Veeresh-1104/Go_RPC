@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -22,7 +23,8 @@ func main() {
 
 	// DoGreet(c)
 	// GreetManyTimes(c)
-	DoLongGreet(c)
+	// DoLongGreet(c)
+	DoGreetDeadline(c, 2*time.Second)
 
 	defer conn.Close()
 
